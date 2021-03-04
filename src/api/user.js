@@ -22,3 +22,10 @@ export function logout() {
     method: 'post'
   })
 }
+
+export function permission() {
+  return request({
+    url: '/vue-admin-template/user/permission',
+    method: 'get'
+  })
+}

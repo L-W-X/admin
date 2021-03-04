@@ -1,12 +1,14 @@
-import { login, logout, getInfo } from '@/api/user'
+import { login, logout, getInfo, permission } from '@/api/user'
 import { getToken, setToken, removeToken } from '@/utils/auth'
-import { resetRouter } from '@/router'
+import { resetRouter, constantRoutes } from '@/router'
+import Vue from 'vue'
 
 const getDefaultState = () => {
   return {
     token: getToken(),
     name: '',
-    avatar: ''
+    avatar: '',
+    permissionRouter: []
   }
 }
 
@@ -24,10 +26,29 @@ const mutations = {
   },
   SET_AVATAR: (state, avatar) => {
     state.avatar = avatar
+  },
+  SET_PERMISSION_ROUTER: (state, val) => {
+    state.permissionRouter = [...constantRoutes, ...val]
   }
 }
 
 const actions = {
+  // 获取权限数组
+  async getPermission({ commit }) {
+    try {
+      const result = await permission()
+      commit('SET_PERMISSION_ROUTER', result.data.permission)
+      return Promise.resolve(result.data.permission)
+    } catch (error) {
+      console.log(error)
+      Vue.$message({
+        message: '权限请求失败',
+        type: 'error'
+      })
+      return Promise.reject()
+    }
+  },
+
   // user login
   login({ commit }, userInfo) {
     const { username, password } = userInfo

@@ -1,4 +1,5 @@
 import router from './router'
+import staticRoutes from './router/routes'
 import store from './store'
 import { Message } from 'element-ui'
 import NProgress from 'nprogress' // progress bar
@@ -21,6 +22,41 @@ router.beforeEach(async(to, from, next) => {
   const hasToken = getToken()
 
   if (hasToken) {
+    if (store.state.user.permissionRouter.length === 0) {
+      const url = new URL(window.location.href)
+      const hash = url.hash
+      const currentRoute = hash.split('#')[1]
+      const getNewRoute = (staticArray, permissionArray) => {
+        const newArray = []
+        staticArray.forEach(item => {
+          const findThing = permissionArray.find(info => {
+            if (info.name === item.name) {
+              return true
+            }
+          })
+          if (findThing) {
+            if (findThing.children && item.children) {
+              const newArrayitem = getNewRoute(item.children, findThing.children)
+              if (newArrayitem.length === 0) {
+                delete item.children
+              } else {
+                item.children = newArrayitem
+              }
+              newArray.push(item)
+            } else {
+              newArray.push(item)
+            }
+          }
+        })
+        return newArray
+      }
+      const permissionArray = await store.dispatch('user/getPermission')
+      const routes = getNewRoute(staticRoutes, permissionArray)
+      console.log(routes)
+      router.addRoutes(routes)
+      next({ path: currentRoute,
+        replace: true })
+    }
     if (to.path === '/login') {
       // if is logged in, redirect to the home page
       next({ path: '/' })
